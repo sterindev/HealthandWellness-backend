@@ -30,7 +30,7 @@ app.use(express.json()); // Parse JSON requests
 
 // CORS Configuration
 const corsOptions = {
-  origin: 'https://healthandwellness453.netlify.app/', // Replace with your frontend URL
+  origin: 'https://healthandwellness453.netlify.app', // Replace with your frontend URL
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
@@ -49,8 +49,9 @@ const { authenticate } = require('./middleware/authMiddleware');
 app.use('/api/auth', authRouter); // Authentication routes
 app.use('/api/exercises', exerciseRoutes); // Exercise routes
 app.use('/api/foodlogs', foodLogRoutes); // Food logs routes
-app.use('/api/', nutritionGoalRoutes); // Nutrition goals routes
-app.use('/api', goalRoutes);
+app.use('/api/nutrition-goals', nutritionGoalRoutes);
+app.use('/api/goals', goalRoutes);
+
 app.use('/api/user/tracking', authenticate, userRoutes);
 
 // Health Check Route
@@ -68,11 +69,23 @@ app.use((err, req, res, next) => {
 });
 
 // Handle 404 - Not Found
-app.use((req, res) => {
-  res.status(404).json({
-    message: 'Route not found',
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    message: err.message || 'Something went wrong!',
   });
 });
+
+
+
+app.get('/api/status', async (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  res.status(200).json({
+    status: 'API is running smoothly!',
+    database: isDbConnected ? 'Connected' : 'Disconnected',
+  });
+});
+
 
 // Server setup
 const PORT = process.env.PORT || 5000;
